@@ -17,7 +17,7 @@ types=($(echo "$type_tmp" | sed "s/ /-/g"))
 budgets=($(echo "$budget_tmp" | sed "s/ /-/g"))
 links=($(echo "$link_tmp" | sed "s/ /-/g"))
 
-# logo=""
+logo="/Users/wa5ina/Porn/automation/upwork-bot/logo.png"
 brave="/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
 # get length of an array
 titlesLength=${#titles[@]}
@@ -39,18 +39,13 @@ do
     if [ $i -eq 0 ]; then
         continue
     fi
-    answer=$(/Users/wa5ina/bin/alerter.sh  -title "$title" -subtitle "posted: $posted_each " -message "type: $type_each budget: $budget_each" -timeout 10 -actions "open" -sender "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser")
+    answer=$(/Users/wa5ina/bin/alerter.sh  -title "$title" -subtitle "posted: $posted_each " -message "type: $type_each budget: $budget_each" -timeout 10 -actions "open" -sender "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser" -appIcon "$logo")
     if [ "$answer" = "open" ]; then
         open -a   "$brave" "$link_each"
     fi
     sleep 3
 
 done
+
+ 
 echo "" > jobs.json
-
-
-
-
-    
-
-

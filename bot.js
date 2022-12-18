@@ -1,7 +1,6 @@
 
 // if there's a timeout error, wait for 10 seconds and run the script again 
 
-console.log('starting the script');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 require('dotenv').config();
@@ -16,7 +15,6 @@ async function getTypeOfJob(listing) {
     // if type is hourly get the budget from the same element <strong data-test="job-type">
     // let budget = '';
     if (type.includes('Hourly')) {
-
         // search for $ sign in the text
         let index = type.indexOf('$');
         // console.log(index);
@@ -40,7 +38,6 @@ async function getTypeOfJob(listing) {
     }
 }
 
-
 async function isVerified(listing) {
     // check if the payment is verified
     let status = await listing.$eval('small[data-test="payment-verification-status"] strong', (strong) => strong.innerText);
@@ -57,7 +54,6 @@ async function getTitle(listing) {
 
 }
 
-
 async function getLink(listing) {
     // get the link of the job which is in <h4 class="job-tile-title"> <a href="link"> </a> </h4>
     return await listing.$eval('a[href^="/jobs/"]', (a) => a.href);
@@ -69,7 +65,6 @@ async function getDescription(listing) {
     let description = await listing.$eval('span[data-test="job-description-text"]', (span) => span.innerText);
     return description;
 }
-
 
 async function getTime(listing) {
     // get the time of the job which in <span data-test="UpCRelativeTime">
@@ -84,12 +79,11 @@ function tooOld(time) {
     let index = time.indexOf(' ');
     let number = time.substring(0, index);
     number = parseInt(number);
-    if (number > 25) {
+    if (number > 15) {
         return true;
     }
     return false;
 }
-
 
 function tooCheap(typeOfJob) {
     // console.log(typeOfJob.type);
@@ -112,17 +106,13 @@ function tooCheap(typeOfJob) {
     return false;
 }
 
-
 (async () => {
-    console.log('entering the async function');
     // reading keywords from keywords.txt file
     let keywords = fs.readFileSync('/Users/wa5ina/Porn/automation/upwork-bot/keywords.txt', 'utf-8');
     keywords = keywords.split('\n');
     for (let i = 0; i < keywords.length; i++) {
         keywords[i] = keywords[i].trim();
     }
-    // console.log(keywords);
-    // return;
     // Launch the browser in non-headless mode
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -166,66 +156,50 @@ function tooCheap(typeOfJob) {
     // wait for search input to load
     // await page.waitForSelector('input[placeholder="Search for job"]', { visible: true });
     for (let i = 0; i < keywords.length; i++) {
-        console.log('searching for ' + keywords[i]);
-        await page.goto('https://www.upwork.com/ab/jobs/search/?q=' + keywords[i]);
-        if (i == 0) {
+        // console.log('searching for ' + keywords[i]);
+        for (let j = 0; j < 5; j++) {
+            // scrolling throught 5 pages 
+            await page.goto('https://www.upwork.com/ab/jobs/search/?q=' + keywords[i] + '&page=' + j + '&sort=recency');
             await page.waitForTimeout(3000);
-            await page.waitForSelector('div[data-test="jobs_per_page"]', { visible: true });
-            await page.click('div[data-test="jobs_per_page"]');
-            // wait for the dropdown menu to load
-            await page.waitForTimeout(5000);
-            // click in the <span> 50 </span>
-            await page.click('#dropdown-menu-6 li:nth-child(3) span');
+            await page.waitForSelector('div[data-test="main-tabs-index"]', { visible: true });
+            // get all sections with data-test="JobTile"
+            const listings = await page.$$('section[data-test="JobTile"]');
+            // change the page number of jobs
+            let jobs = await Promise.all(listings.map(async (listing) => {
+                // get the title of the job which in <h4 class="job-tile-title"> <a> </a> </h4>
+                let posted = await getTime(listing);
+                // if it's too old, then skip it
+                if (tooOld(posted) === true)
+                    return;
+                // get title of the job
+                let title = await getTitle(listing);
+                // get the link of the job 
+                let link = await getLink(listing);
+                // get the description of the job 
+                let description = await getDescription(listing);
+                // get type of job {type, budget}
+                let typeOfJob = await getTypeOfJob(listing);
+                if (tooCheap(typeOfJob) === true)
+                    return;
+                // // is client's payment verified (true or false)
+                let paymentverified = await isVerified(listing);
+                return { posted, title, link, description, typeOfJob, paymentverified };
+            }
+            ));
+            // filter out the undefined jobs and already pushed jobs
+            jobs = jobs.filter((job) => job !== undefined && !allJobs.includes(job));
+            // push jobs to alljobs
+            allJobs.push(...jobs);
         }
-
-        // wait for the page to load
-        await page.waitForTimeout(3000);
-        await page.waitForSelector('div[data-test="main-tabs-index"]', { visible: true });
-        // get all sections with data-test="JobTile"
-        const listings = await page.$$('section[data-test="JobTile"]');
-        // change the page number of jobs
-        let jobs = await Promise.all(listings.map(async (listing) => {
-            // get the title of the job which in <h4 class="job-tile-title"> <a> </a> </h4>
-            let posted = await getTime(listing);
-            // if it's too old, then skip it
-            if (tooOld(posted) === true)
-                return;
-            let title = await getTitle(listing);
-            // run titles only for once
-            // get the link of the job which is in <h4 class="job-tile-title"> <a href="link"> </a> </h4>
-            let link = await getLink(listing);
-            // get the description of the job which in <span data-test="job-tile-description">
-            // description = await listing.$eval('span[data-test="job-description-text"]', (span) => span.innerText);
-            let description = await getDescription(listing);
-            // get type of job {type, budget}
-            let typeOfJob = await getTypeOfJob(listing);
-            if (tooCheap(typeOfJob) === true)
-                return;
-            // // is client's payment verified (true or false)
-            let paymentverified = await isVerified(listing);
-            return { posted, title, link, description, typeOfJob, paymentverified };
-        }
-        ));
-        // filter out the undefined jobs
-        jobs = jobs.filter((job) => job !== undefined);
-        // push jobs to alljobs
-        allJobs.push(...jobs);
 
     }
-
-    // filter out the undefined jobs
-    // save the jobs to a json file
-
     // Add some randomness to the requests
     const randomDelay = Math.random() * 2000;
     await page.waitForTimeout(randomDelay);
-
     // Close the browser
     await browser.close();
     // write to json file by overriding the file
-    console.log('Writing to json file');
     fs.writeFileSync('/Users/wa5ina/Porn/automation/upwork-bot/jobs.json', JSON.stringify(allJobs, null, 2));
-    console.log('Done');
 })();
 
 
