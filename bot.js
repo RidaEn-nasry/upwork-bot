@@ -187,7 +187,7 @@ function tooCheap(typeOfJob) {
             }
             ));
             // filter out the undefined jobs and already pushed jobs
-            jobs = jobs.filter((job) => job !== undefined && !allJobs.includes(job));
+            jobs = jobs.filter((job) => job !== undefined && !jobs.includes(job));
             // push jobs to alljobs
             allJobs.push(...jobs);
         }
