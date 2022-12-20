@@ -108,7 +108,7 @@ function tooCheap(typeOfJob) {
 
 (async () => {
     // reading keywords from keywords.txt file
-    let keywords = fs.readFileSync('/Users/wa5ina/Porn/automation/upwork-bot/keywords.txt', 'utf-8');
+    let keywords = fs.readFileSync('./keywords.txt', 'utf-8');
     keywords = keywords.split('\n');
     for (let i = 0; i < keywords.length; i++) {
         keywords[i] = keywords[i].trim();
@@ -199,7 +199,7 @@ function tooCheap(typeOfJob) {
     // Close the browser
     await browser.close();
     // write to json file by overriding the file
-    fs.writeFileSync('/Users/wa5ina/Porn/automation/upwork-bot/jobs.json', JSON.stringify(allJobs, null, 2));
+    fs.writeFileSync('./jobs.json', JSON.stringify(allJobs, null, 2));
 })();
 
 
