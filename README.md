@@ -1,9 +1,13 @@
 # upwork-bot
+
+You can a "how i did it" [here](https://www.ridaennasry.me/posts/scraping-upwork-jobs-using-nodejs/)<br>
 This is a simple bot i scrambled toghether cause i was sick and tired of **you know** (referesh, refresh...) it bassicaly scrape 
 upwork.com for jobs using configurable keywords and filter those jobs based on a creteria.
 
 The script is diveded into 2 parts for decoupling sake, `bot.js` do all the scraping stuff and fill in `jobs.json` file with an array of json objects each
 representing a job listing something like this:
+
+
 
 ```
 [
